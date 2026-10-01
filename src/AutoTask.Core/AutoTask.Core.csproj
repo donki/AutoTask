@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Todo lo que no es ventana: modelo, formato .soctask, importador .rec, editor, reproduccion,
+    ganchos y SendInput, atajos, ajustes, textos. Lo usan la aplicacion WPF y el reproductor de los
+    exe compilados (Native AOT), asi que no puede depender de WPF ni de reflexion.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible>true</IsAotCompatible>
+    <RootNamespace>SocAutoTask</RootNamespace>
+    <AssemblyName>AutoTask.Core</AssemblyName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AutoTask.Tests" />
+  </ItemGroup>
+
+</Project>

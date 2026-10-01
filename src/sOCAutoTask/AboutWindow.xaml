@@ -1,0 +1,100 @@
+<Window x:Class="SocAutoTask.Desktop.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:SocAutoTask.Desktop.Localization"
+        xmlns:ctl="clr-namespace:SocAutoTask.Desktop.Controls"
+        Title="{loc:T About}"
+        Width="540" Height="720" MinWidth="440" MinHeight="480"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PageBackground}">
+
+    <!--
+        «Acerca de» canonico del catalogo (Mobile 7 y Anexo E): cabecera, contacto, idioma,
+        privacidad, licencias, novedades y el aviso legal, el ultimo.
+    -->
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="WhatsNewButton" Style="{StaticResource GhostIconButton}" Tag="news" ToolTip="{loc:T WhatsNew}"
+                    AutomationProperties.Name="{loc:T WhatsNew}" Click="OnWhatsNew" />
+            <Button x:Name="CloseButton" Style="{StaticResource IconButton}" Tag="close" ToolTip="{loc:T Close}"
+                    AutomationProperties.Name="{loc:T Close}" IsCancel="True" Click="OnClose" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,8,0">
+                <Border Style="{StaticResource Card}" Padding="24,22">
+                    <StackPanel>
+                        <Image x:Name="LogoImage" Width="84" Height="84" HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:T AppTitle}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource Primary}"
+                                   HorizontalAlignment="Center" Margin="0,10,0,0" />
+                        <TextBlock x:Name="VersionLabel" Style="{StaticResource HintText}" FontSize="14" HorizontalAlignment="Center" Margin="0,6,0,0" />
+                        <TextBlock Text="{loc:T AboutDescription}" Style="{StaticResource HintText}" TextAlignment="Center" Margin="0,10,0,0" />
+                        <TextBlock Text="{loc:T Publisher}" Style="{StaticResource HintText}" HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Contact}" Style="{StaticResource CardTitle}" Margin="0,0,0,10" />
+                        <Button x:Name="ContactButton" Style="{StaticResource OutlineButton}" Content="{loc:T WriteAuthor}" HorizontalAlignment="Center" Click="OnContact" />
+                        <TextBlock Text="{loc:T ContactHint}" Style="{StaticResource HintText}" TextAlignment="Center" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T LanguageTitle}" Style="{StaticResource CardTitle}" Margin="0,0,0,10" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="SpanishButton" Style="{StaticResource OutlineButton}" Click="OnSpanish" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ctl:Icon Kind="flag_es" Width="24" Margin="0,0,8,0" />
+                                    <TextBlock Text="Español" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="EnglishButton" Style="{StaticResource OutlineButton}" Click="OnEnglish">
+                                <StackPanel Orientation="Horizontal">
+                                    <ctl:Icon Kind="flag_us" Width="24" Margin="0,0,8,0" />
+                                    <TextBlock Text="English" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Text="{loc:T LanguageHint}" Style="{StaticResource HintText}" TextAlignment="Center" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Privacy}" Style="{StaticResource CardTitle}" Foreground="{DynamicResource Success}" Margin="0,0,0,8" />
+                        <TextBlock Text="{loc:T PrivacyText}" Style="{StaticResource BodyText}" Foreground="{DynamicResource TextSecondary}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T License}" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+                        <TextBlock Text="{loc:T LicenseText}" Style="{StaticResource BodyText}" Foreground="{DynamicResource TextSecondary}" />
+                        <TextBlock Text="{loc:T LicenseLine}" Style="{StaticResource HintText}" FontSize="11" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T LegalTitle}" Style="{StaticResource CardTitle}" Foreground="{DynamicResource Danger}" Margin="0,0,0,10" />
+                        <Border Background="{DynamicResource WarningSurface}" CornerRadius="8" Padding="15">
+                            <StackPanel>
+                                <TextBlock Text="{loc:T LegalText1}" Style="{StaticResource BodyText}" Foreground="{DynamicResource TextSecondary}" />
+                                <TextBlock Text="{loc:T LegalText2}" Style="{StaticResource BodyText}" Foreground="{DynamicResource TextSecondary}" Margin="0,10,0,0" />
+                                <Border Background="{DynamicResource Danger}" CornerRadius="6" Padding="12" Margin="0,10,0,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <ctl:Icon Kind="warning" Width="18" Height="18" TextElement.Foreground="{DynamicResource OnPrimary}" Margin="0,0,8,0" />
+                                        <TextBlock Text="{loc:T WarningText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource OnPrimary}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

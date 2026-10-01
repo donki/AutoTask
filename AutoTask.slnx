@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AutoTask.Core/AutoTask.Core.csproj" />
+    <Project Path="src/sOCAutoTask/sOCAutoTask.csproj" />
+    <Project Path="src/sOCAutoTaskPlayer/sOCAutoTaskPlayer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AutoTask.Tests/AutoTask.Tests.csproj" />
+  </Folder>
+</Solution>

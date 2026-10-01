@@ -1,0 +1,122 @@
+<Window x:Class="SocAutoTask.Desktop.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:SocAutoTask.Desktop.Localization"
+        xmlns:ctl="clr-namespace:SocAutoTask.Desktop.Controls"
+        Title="{loc:T SettingsTitle}"
+        Width="560" Height="720" MinWidth="460" MinHeight="420"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PageBackground}">
+
+    <!-- Botones fijos abajo (§6.10): con la letra grande el resto se desplaza. -->
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="CancelButton" Style="{StaticResource GhostIconButton}" Tag="close" ToolTip="{loc:T Cancel}"
+                    AutomationProperties.Name="{loc:T Cancel}" IsCancel="True" />
+            <Button x:Name="SaveButton" Style="{StaticResource IconButton}" Tag="check" ToolTip="{loc:T Save}"
+                    AutomationProperties.Name="{loc:T Save}" IsDefault="True" Click="OnSave" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,8,0">
+
+                <!-- Reproduccion: va con la grabacion (RF-19..21). -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T PlaybackTitle}" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="{loc:T PlaybackHint}" Style="{StaticResource HintText}" Margin="0,4,0,0" />
+                        <TextBlock Text="{loc:T SpeedLabel}" Style="{StaticResource FieldLabel}" />
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox x:Name="SpeedCombo" Style="{StaticResource Combo}" SelectionChanged="OnSpeedChanged" />
+                            <TextBox x:Name="CustomSpeedBox" Style="{StaticResource Field}" Width="90" Margin="8,0,0,0"
+                                     ToolTip="{loc:T CustomSpeedTip}" AutomationProperties.Name="{loc:T CustomSpeedTip}" />
+                        </StackPanel>
+                        <TextBlock Text="{loc:T RepeatLabel}" Style="{StaticResource FieldLabel}" />
+                        <RadioButton x:Name="OnceRadio" Style="{StaticResource Radio}" GroupName="Repeat" Content="{loc:T RepeatOnce}" />
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TimesRadio" Style="{StaticResource Radio}" GroupName="Repeat" Content="{loc:T RepeatTimes}" />
+                            <TextBox x:Name="TimesBox" Style="{StaticResource Field}" Width="90" Margin="8,4,0,0" AutomationProperties.Name="{loc:T RepeatTimes}" />
+                        </StackPanel>
+                        <RadioButton x:Name="ContinuousRadio" Style="{StaticResource Radio}" GroupName="Repeat" Content="{loc:T RepeatContinuous}" />
+                        <TextBlock Text="{loc:T PauseLabel}" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="PauseBox" Style="{StaticResource Field}" Width="90" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T PauseLabel}" />
+                        <TextBlock Text="{loc:T CountdownLabel}" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="CountdownBox" Style="{StaticResource Field}" Width="90" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T CountdownLabel}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Atajos y parada de emergencia (RF-05, RF-12, RF-13). -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T HotkeysTitle}" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="{loc:T HotkeysHint}" Style="{StaticResource HintText}" Margin="0,4,0,0" />
+                        <TextBlock Text="{loc:T RecordHotkeyLabel}" Style="{StaticResource FieldLabel}" />
+                        <ctl:HotkeyBox x:Name="RecordHotkeyBox" Style="{StaticResource Field}" AutomationProperties.Name="{loc:T RecordHotkeyLabel}" />
+                        <TextBlock Text="{loc:T PlayHotkeyLabel}" Style="{StaticResource FieldLabel}" />
+                        <ctl:HotkeyBox x:Name="PlayHotkeyBox" Style="{StaticResource Field}" AutomationProperties.Name="{loc:T PlayHotkeyLabel}" />
+                        <TextBlock Text="{loc:T EmergencyTitle}" Style="{StaticResource FieldLabel}" />
+                        <CheckBox x:Name="PauseKeyCheck" Style="{StaticResource Check}" Content="{loc:T EmergencyPause}" />
+                        <CheckBox x:Name="ScrollLockCheck" Style="{StaticResource Check}" Content="{loc:T EmergencyScrollLock}" />
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox x:Name="EscapeCheck" Style="{StaticResource Check}" Content="{loc:T EmergencyEscape}" />
+                            <TextBox x:Name="EscapeHoldBox" Style="{StaticResource Field}" Width="70" Margin="8,4,0,0" AutomationProperties.Name="{loc:T EmergencyEscape}" />
+                            <TextBlock Text="{loc:T Seconds}" Style="{StaticResource HintText}" VerticalAlignment="Center" Margin="6,4,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{loc:T EmergencyHint}" Style="{StaticResource HintText}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Que se graba (RF-07, RF-52). -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T RecordingTitle}" Style="{StaticResource CardTitle}" />
+                        <CheckBox x:Name="KeyboardCheck" Style="{StaticResource Check}" Content="{loc:T RecordKeyboard}" />
+                        <Border Background="{DynamicResource WarningSurface}" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+                            <TextBlock Text="{loc:T RecordKeyboardWarning}" Style="{StaticResource BodyText}" />
+                        </Border>
+                        <CheckBox x:Name="MovesCheck" Style="{StaticResource Check}" Content="{loc:T RecordMoves}" />
+                        <TextBlock Text="{loc:T ElevationHint}" Style="{StaticResource HintText}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Ventana (RF-41..44). -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T WindowTitle}" Style="{StaticResource CardTitle}" />
+                        <CheckBox x:Name="TopmostCheck" Style="{StaticResource Check}" Content="{loc:T AlwaysOnTop}" />
+                        <CheckBox x:Name="LabelsCheck" Style="{StaticResource Check}" Content="{loc:T ShowLabels}" />
+                        <CheckBox x:Name="TrayCheck" Style="{StaticResource Check}" Content="{loc:T TrayOnMinimize}" />
+                        <TextBlock Text="{loc:T ThemeLabel}" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="ThemeCombo" Style="{StaticResource Combo}" HorizontalAlignment="Left" SelectionChanged="OnThemeChanged" />
+                        <TextBlock Text="{loc:T LanguageTitle}" Style="{StaticResource FieldLabel}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="SpanishButton" Style="{StaticResource OutlineButton}" Click="OnSpanish" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <ctl:Icon Kind="flag_es" Width="24" Margin="0,0,8,0" />
+                                    <TextBlock Text="Español" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="EnglishButton" Style="{StaticResource OutlineButton}" Click="OnEnglish">
+                                <StackPanel Orientation="Horizontal">
+                                    <ctl:Icon Kind="flag_us" Width="24" Margin="0,0,8,0" />
+                                    <TextBlock Text="English" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Ficheros (RF-27). -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T FilesTitle}" Style="{StaticResource CardTitle}" />
+                        <CheckBox x:Name="AssociateCheck" Style="{StaticResource Check}" Content="{loc:T AssociateFiles}" />
+                        <TextBlock x:Name="AssociateHint" Text="{loc:T AssociateHint}" Style="{StaticResource HintText}" Margin="0,6,0,0" />
+                        <TextBlock x:Name="DataFolderText" Style="{StaticResource HintText}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

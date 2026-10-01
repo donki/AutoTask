@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Reproductor minimo de los exe compilados (ARQUITECTURA §6). Native AOT: un exe nativo de
+    ~1-2 MB que no necesita .NET instalado. Lee la grabacion añadida al final de su propio exe con el
+    mismo codigo que la aplicacion (AutoTask.Core). Lo publica tools\compilar-reproductor.ps1.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>SocAutoTask.Player</RootNamespace>
+    <AssemblyName>sOCAutoTaskPlayer</AssemblyName>
+    <Product>sOC AutoTask Player</Product>
+    <ApplicationIcon>appicon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishAot>true</PublishAot>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <StackTraceSupport>false</StackTraceSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <EventSourceSupport>false</EventSourceSupport>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AutoTask.Core\AutoTask.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+.vs/
+*.log
+artifacts/
+TestResults/
+cobertura/
+tests/AutoTask.UITests/artifacts/

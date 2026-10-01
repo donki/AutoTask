@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas de interfaz de sOC AutoTask con FlaUI (MIT) sobre UI Automation (constitucion 8.7).
+    Lanzan el exe Debug ya compilado en modo aislado (SOC_SANDBOX): datos en una carpeta temporal,
+    sin atajos globales, sin bandeja, sin ganchos y sin reproducir nunca. Ver README.md.
+
+    Ademas, la prueba E2E (AUTOTASK_E2E=1) graba y reproduce DE VERDAD contra una ventana de prueba
+    propia (AutoTask.TestTarget), en rafagas cortas y devolviendo el raton a donde estaba.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>SocAutoTask.UITests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="AutoTask.TestTarget\**" />
+    <None Remove="AutoTask.TestTarget\**" />
+    <Page Remove="AutoTask.TestTarget\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoTask.Core\AutoTask.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

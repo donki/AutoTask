@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    Version unica de todo el proyecto (constitucion 11): la aplicacion, el nucleo y el reproductor
+    de los exe compilados. La cambia tools\entregar.ps1. Formato AAAA.MM.DD.N; System.Version
+    quita los ceros de delante al enseñarla, pero InformationalVersion la conserva tal cual.
+  -->
+  <PropertyGroup>
+    <Version>2026.10.01.0</Version>
+    <Company>Socratic</Company>
+    <Copyright>Copyright © 2026 Socratic</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>

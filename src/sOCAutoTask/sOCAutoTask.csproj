@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>SocAutoTask.Desktop</RootNamespace>
+    <AssemblyName>sOCAutoTask</AssemblyName>
+    <ApplicationTitle>sOC AutoTask</ApplicationTitle>
+    <Product>sOC AutoTask</Product>
+    <ApplicationIcon>appicon.ico</ApplicationIcon>
+    <!-- Per-monitor DPI aware v2: coordenadas fisicas en ganchos y SendInput (RF-04). -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AutoTask.Core\AutoTask.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Icons\*.svg" />
+    <Resource Include="Assets\logo.png" />
+  </ItemGroup>
+
+  <!--
+    El reproductor de los exe compilados (Native AOT). Lo genera tools\compilar-reproductor.ps1 en
+    artifacts\player; si no esta (una compilacion rapida sin el), Compilar avisa en vez de fallar.
+  -->
+  <ItemGroup Condition="Exists('..\..\artifacts\player\sOCAutoTaskPlayer.exe')">
+    <EmbeddedResource Include="..\..\artifacts\player\sOCAutoTaskPlayer.exe" LogicalName="AutoTask.Player.exe" />
+  </ItemGroup>
+
+</Project>

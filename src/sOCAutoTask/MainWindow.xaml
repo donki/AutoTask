@@ -1,0 +1,43 @@
+<Window x:Class="SocAutoTask.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:SocAutoTask.Desktop.Localization"
+        Title="{loc:T AppTitle}"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="CanMinimize"
+        AllowDrop="True"
+        UseLayoutRounding="True"
+        Background="{DynamicResource PageBackground}">
+
+    <!--
+        Barra pequeña tipo TinyTask (RF-41): Abrir, Guardar, Grabar, Reproducir, Compilar, Editor,
+        Ajustes y «Mas». Iconos SVG planos; la etiqueta de debajo se oculta desde Ajustes. Debajo,
+        una linea de estado y otra con la grabacion cargada.
+    -->
+    <StackPanel Margin="8">
+        <Border Style="{StaticResource Card}" Padding="6" Margin="0">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="OpenButton" Style="{StaticResource ToolButton}" Tag="open" Content="{loc:T Open}" ToolTip="{loc:T OpenTip}" Click="OnOpen" />
+                <Button x:Name="SaveButton" Style="{StaticResource ToolButton}" Tag="save" Content="{loc:T Save}" ToolTip="{loc:T SaveTip}" Click="OnSave" />
+                <Border Width="1" Margin="4,6" Background="{DynamicResource Separator}" />
+                <Button x:Name="RecordButton" Style="{StaticResource ToolButton}" Tag="record" Content="{loc:T Record}" Click="OnRecord" />
+                <Button x:Name="PlayButton" Style="{StaticResource ToolButton}" Tag="play" Content="{loc:T Play}" Click="OnPlay" />
+                <Border Width="1" Margin="4,6" Background="{DynamicResource Separator}" />
+                <Button x:Name="CompileButton" Style="{StaticResource ToolButton}" Tag="compile" Content="{loc:T Compile}" ToolTip="{loc:T CompileTip}" Click="OnCompile" />
+                <Button x:Name="EditorButton" Style="{StaticResource ToolButton}" Tag="editor" Content="{loc:T Editor}" ToolTip="{loc:T EditorTip}" Click="OnEditor" />
+                <Button x:Name="SettingsButton" Style="{StaticResource ToolButton}" Tag="settings" Content="{loc:T Settings}" ToolTip="{loc:T SettingsTip}" Click="OnSettings" />
+                <Button x:Name="MoreButton" Style="{StaticResource ToolButton}" Tag="more" Content="{loc:T More}" ToolTip="{loc:T MoreTip}" Click="OnMore" />
+            </StackPanel>
+        </Border>
+
+        <Grid Margin="6,8,6,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Ellipse x:Name="StateDot" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{DynamicResource Separator}" />
+            <TextBlock x:Name="StatusText" Grid.Column="1" Style="{StaticResource BodyText}" FontWeight="SemiBold" MaxWidth="560" />
+        </Grid>
+        <TextBlock x:Name="InfoText" Style="{StaticResource HintText}" Margin="22,2,6,2" MaxWidth="560" />
+    </StackPanel>
+</Window>

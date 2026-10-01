@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas de la logica de sOC AutoTask (xUnit, constitucion 8.6): AutoTask.Core entero y, de la
+    aplicacion, lo que no es ventana (el lector de iconos SVG). Nada toca datos reales ni la red:
+    ajustes y ficheros van a carpetas temporales, la reproduccion usa un reloj y un SendInput
+    falsos, y el registro de Windows solo se toca bajo HKCU\Software\sOCAutoTask.Tests (se borra).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>SocAutoTask.Tests</RootNamespace>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AutoTask.Core\AutoTask.Core.csproj" />
+    <Compile Include="..\..\src\sOCAutoTask\Services\SvgIcons.cs" Link="App\SvgIcons.cs" />
+  </ItemGroup>
+
+</Project>

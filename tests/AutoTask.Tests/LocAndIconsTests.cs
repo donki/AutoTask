@@ -92,6 +92,7 @@ public sealed partial class LocAndIconsTests
     {
         var changes = 0;
         void Count() => changes++;
+        Loc.Use("en");   // punto de partida fijo: no depende de la prueba de antes
         Loc.LanguageChanged += Count;
         try
         {

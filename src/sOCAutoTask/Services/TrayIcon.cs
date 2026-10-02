@@ -40,18 +40,6 @@ public sealed class TrayIcon : IDisposable
         };
     }
 
-    public void Notify(string title, string text)
-    {
-        if (!_shown)
-            return;
-        var data = Data();
-        data.uFlags = 0x10;
-        data.szInfoTitle = title.Length > 63 ? title[..63] : title;
-        data.szInfo = text.Length > 255 ? text[..255] : text;
-        data.dwInfoFlags = 0x1;
-        Shell_NotifyIcon(1, ref data);
-    }
-
     private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         switch (msg)

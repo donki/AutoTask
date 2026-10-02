@@ -89,20 +89,35 @@ Estructura: `src/AutoTask.Core` (toda la lógica, sin interfaz), `src/sOCAutoTas
 
 ## Pruebas
 
-`tests/AutoTask.Tests` (xUnit): **191 pruebas, 191 pasan** — formato `.soctask` (ida y vuelta,
-cualquier byte cambiado, cortes en cada posición, versión futura, un millón de eventos), importador
-`.rec`, plan y reproductor con reloj y `SendInput` falsos (velocidades, vueltas, pausas, cuenta
-atrás, espera de modificadores, parada en cada fase, soltar teclas), limpieza del atajo, editor,
-parada de emergencia, coordenadas (cada píxel de dos monitores vuelve al mismo), atajos, compilar a
-exe (con el reproductor AOT de verdad y `--check`), ajustes, rutas portátiles, instancia única,
-asociación en una rama de pruebas del registro, textos es/en e iconos SVG. Nada toca datos reales
-ni la red.
+`tests/AutoTask.Tests` (xUnit): **301 pruebas, 301 pasan**. Lógica: formato `.soctask` (ida y
+vuelta, cualquier byte cambiado, cortes en cada posición, versión futura, un millón de eventos),
+importador `.rec`, plan y reproductor con reloj y `SendInput` falsos (velocidades, vueltas, pausas,
+cuenta atrás, espera de modificadores, parada en cada fase, soltar teclas), limpieza del atajo,
+editor, parada de emergencia, coordenadas, atajos, compilar a exe, ajustes, rutas portátiles,
+instancia única, asociación en una rama de pruebas del registro, textos es/en e iconos SVG. Además,
+desde la 2026.10.03.0, **las ventanas de verdad** (barra, ajustes, editor, guía, «Acerca de»,
+novedades, diálogos, bandeja y atajos, arranque) en un hilo STA con una **plataforma falsa**
+(`Services/Platform.cs`: sin ganchos, sin `SendInput`, sin diálogos de Windows, registro en una
+rama de pruebas), los `INPUT` exactos que saldrían por `SendInput`, lo que hacen los ganchos con
+cada mensaje y el reproductor de los exe compilados. Nada toca datos reales ni la red, y nada
+mueve el ratón.
 
-- Cobertura de lo instrumentado (AutoTask.Core + lector de iconos): **89,9 %** de líneas
-  (2255 de 2508; ramas 78,6 %).
-- Cobertura sobre toda la app: **unos 63 %** (2255 de ~3570 líneas ejecutables, contando como no
-  cubiertas las ~1060 sentencias de las ventanas WPF y del `Main` del reproductor).
-- Tiempo del banco: **unos 3 s** (`dotnet test --no-build`). Fecha: 2026-10-01.
+- Cobertura de lo instrumentado: **94,9 %** (3002 de 3162 líneas). Ahora se instrumenta la
+  aplicación entera (núcleo, ventanas y reproductor), así que coincide con la de toda la app.
+- Cobertura sobre toda la app: **94,9 %** (3002 de 3162 líneas ejecutables; antes 57,0 % con la
+  misma medida).
+- Tiempo del banco: **unos 20 s** (`dotnet test --no-build`; las ventanas se abren fuera de la
+  pantalla y sin activarse). Fecha: 2026-10-03.
+
+**Cómo se cuenta «toda la app»** (`tools/cobertura-app.py`, General §8.6): todos los `.cs` de
+`src/` salvo `obj/`, `bin/` y generados; solo cuentan las líneas con sentencias (fuera llaves
+sueltas, `using`, declaraciones sin cuerpo como las de `LibraryImport`, campos sin inicializar,
+atributos, interfaces y comentarios). Un fichero que el banco compila cuenta lo que marca coverlet
+(sin excluir `CompilerGeneratedAttribute`: los métodos async y las lambdas cuentan); uno que no
+compila contaría todas sus sentencias como no cubiertas. Lo que queda sin cubrir: el menú
+contextual nativo de la bandeja, los diálogos comunes de Windows y `Process.Start` de la
+plataforma de verdad, el `Main` del reproductor, algunos fallos de Windows al poner los ganchos y
+ramas de la instancia única que necesitan otro proceso.
 
 `tests/AutoTask.UITests` (FlaUI, [README](tests/AutoTask.UITests/README.md)): **8 pruebas de
 interfaz** en modo aislado (`SOC_SANDBOX`), unos **20 s**; y **3 pruebas reales** (con
@@ -115,6 +130,7 @@ dotnet test tests\AutoTask.Tests
 dotnet test tests\AutoTask.Tests --collect:"XPlat Code Coverage" --settings tests\AutoTask.Tests\coverage.runsettings
 dotnet tool restore
 dotnet tool run reportgenerator -reports:tests\AutoTask.Tests\TestResults\*\coverage.cobertura.xml -targetdir:cobertura -reporttypes:TextSummary
+python tools\cobertura-app.py tests\AutoTask.Tests\TestResults --app src --detalle
 ```
 
 ## Qué puede romper

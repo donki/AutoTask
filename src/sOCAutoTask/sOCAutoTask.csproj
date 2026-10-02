@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutoTask.Core\AutoTask.Core.csproj" />
+    <InternalsVisibleTo Include="AutoTask.Tests" />
   </ItemGroup>
 
   <ItemGroup>

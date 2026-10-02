@@ -68,6 +68,13 @@ public abstract class HookThread : IDisposable
 
     protected virtual void OnTimer() { }
 
+    /// <summary>Para las pruebas: lo que haria el gancho con este evento, sin ganchos de verdad.</summary>
+    internal void Simulate(int message, in Win32.MSLLHOOKSTRUCT data) => OnMouse(message, data);
+
+    internal void Simulate(int message, in Win32.KBDLLHOOKSTRUCT data) => OnKeyboard(message, data);
+
+    internal void SimulateTimer() => OnTimer();
+
     private unsafe void Loop(ManualResetEventSlim ready)
     {
         nint mouseHook = 0, keyboardHook = 0;

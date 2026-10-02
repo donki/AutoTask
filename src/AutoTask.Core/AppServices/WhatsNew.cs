@@ -12,6 +12,15 @@ public static class WhatsNew
 
     public static readonly Entry[] Entries =
     [
+        new("2026.10.03.0",
+            [
+                "Más pruebas automáticas: ahora también de las ventanas y del reproductor de los .exe (301 pruebas).",
+                "Sin cambios en cómo se usa.",
+            ],
+            [
+                "More automated tests: now also of the windows and of the .exe player (301 tests).",
+                "Nothing changes in how you use it.",
+            ]),
         new("2026.10.01.0",
             [
                 "Primera versión: graba lo que haces con el ratón y el teclado y lo repite cuando quieras.",

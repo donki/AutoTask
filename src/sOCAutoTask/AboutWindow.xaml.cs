@@ -21,7 +21,7 @@ public partial class AboutWindow : Window
         Closed += (_, _) => Loc.LanguageChanged -= OnLanguageChanged;
     }
 
-    private static bool Elevation() => Native.Elevation.IsCurrentProcessElevated();
+    private static bool Elevation() => Platform.Current.IsElevated;
 
     private void OnLanguageChanged()
     {
@@ -51,7 +51,7 @@ public partial class AboutWindow : Window
     {
         try
         {
-            Process.Start(new ProcessStartInfo(AppInfo.ContactAddress) { UseShellExecute = true });
+            Platform.Current.Start(new ProcessStartInfo(AppInfo.ContactAddress) { UseShellExecute = true });
         }
         catch (Exception ex)
         {

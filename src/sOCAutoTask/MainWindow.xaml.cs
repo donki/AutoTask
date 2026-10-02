@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using Microsoft.Win32;
 using SocAutoTask.AppServices;
 using SocAutoTask.Compile;
 using SocAutoTask.Desktop.Services;
@@ -35,10 +34,10 @@ public partial class MainWindow : Window
     private readonly MacroSession _session = new();
     private readonly DispatcherTimer _ticker = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private UiState _state = UiState.Idle;
-    private Recorder? _recorder;
+    private IRecorder? _recorder;
     private Stopwatch? _recordWatch;
     private PlaybackSession? _playback;
-    private EmergencyStopWatcher? _emergency;
+    private IEmergencyWatcher? _emergency;
     private bool _elevatedWarning;
     private TrayIcon? _tray;
     private HotkeyManager? _hotkeys;
@@ -51,14 +50,15 @@ public partial class MainWindow : Window
             Title += " [SOC_SANDBOX]";
 
         _session.Changed += RefreshInfo;
-        Loc.LanguageChanged += () => { RefreshStateTexts(); RefreshTooltips(); RefreshInfo(); SetIdleStatus(_idleStatusKey, _idleStatusArgs); };
+        Loc.LanguageChanged += OnLanguageChanged;
+        Closed += (_, _) => Loc.LanguageChanged -= OnLanguageChanged;
         _ticker.Tick += (_, _) => Tick();
         SourceInitialized += OnSourceInitialized;
         Closing += OnClosing;
         Drop += OnDrop;
         DragOver += (_, e) =>
         {
-            e.Effects = DroppedFile(e) is not null && _state == UiState.Idle ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Effects = DroppedFile(e.Data) is not null && _state == UiState.Idle ? DragDropEffects.Copy : DragDropEffects.None;
             e.Handled = true;
         };
         LocationChanged += (_, _) => UpdateIgnoredArea();
@@ -72,6 +72,14 @@ public partial class MainWindow : Window
     }
 
     public MacroSession Session => _session;
+
+    private void OnLanguageChanged()
+    {
+        RefreshStateTexts();
+        RefreshTooltips();
+        RefreshInfo();
+        SetIdleStatus(_idleStatusKey, _idleStatusArgs);
+    }
 
     // =====================================================================
     //  Arranque y cierre
@@ -321,7 +329,7 @@ public partial class MainWindow : Window
 
     private void CheckElevatedForeground()
     {
-        if (_elevatedWarning || !Elevation.ForegroundIsElevatedAndWeAreNot())
+        if (_elevatedWarning || !Platform.Current.ForegroundIsElevatedAndWeAreNot())
             return;
         _elevatedWarning = true;
         AppLog.Write("ventana elevada en primer plano sin AutoTask elevado");
@@ -350,7 +358,7 @@ public partial class MainWindow : Window
         }
         if (!ConfirmDiscard())
             return;
-        _recorder = new Recorder(new RecorderOptions { Keyboard = _settings.RecordKeyboard, MouseMoves = _settings.RecordMouseMoves });
+        _recorder = Platform.Current.CreateRecorder(new RecorderOptions { Keyboard = _settings.RecordKeyboard, MouseMoves = _settings.RecordMouseMoves });
         try
         {
             _recorder.Start();
@@ -433,12 +441,13 @@ public partial class MainWindow : Window
         var screen = Screens.Virtual();
         var screenChanged = !recording.Screen.IsEmpty && recording.Screen != screen;
 
-        var sink = new Win32InputSink();
-        _playback = new PlaybackSession(recording.Events, recording.Options, sink, new StopwatchClock(), new SystemKeyboardState(), _settings.CountdownSeconds);
+        var platform = Platform.Current;
+        var sink = platform.CreateSink();
+        _playback = new PlaybackSession(recording.Events, recording.Options, sink, platform.CreateClock(), platform.Keyboard, _settings.CountdownSeconds);
         _playback.Status += s => Dispatcher.BeginInvoke(() => ShowPlaybackStatus(s, screenChanged));
         try
         {
-            _emergency = new EmergencyStopWatcher(_settings.Emergency, _settings.EscapeHoldMs, () => _playback?.Control.Stop(StopReason.Emergency));
+            _emergency = platform.CreateEmergency(_settings.Emergency, _settings.EscapeHoldMs, () => _playback?.Control.Stop(StopReason.Emergency));
             if (_settings.Emergency != Input.EmergencyKeys.None)
                 _emergency.Start();
         }
@@ -478,7 +487,7 @@ public partial class MainWindow : Window
     private static string LoopText(PlaybackStatus s) =>
         s.Loops is { } loops ? Loc.Format("LoopOf", s.Loop, loops) : Loc.Format("LoopContinuous", s.Loop);
 
-    private void PlaybackFinished(PlaybackSession session, Win32InputSink sink, StopReason reason)
+    private void PlaybackFinished(PlaybackSession session, ICountingSink sink, StopReason reason)
     {
         if (!ReferenceEquals(session, _playback))
             return;
@@ -505,7 +514,7 @@ public partial class MainWindow : Window
     private void OfferElevation(string key)
     {
         _elevatedWarning = false;
-        if (Elevation.IsCurrentProcessElevated())
+        if (Platform.Current.IsElevated)
             return;
         if (PromptWindow.Confirm(this, Loc.Get("ElevatedTitle"), Loc.Get(key)))
             RestartAsAdmin();
@@ -521,13 +530,9 @@ public partial class MainWindow : Window
     {
         if (_state != UiState.Idle)
             return;
-        var dialog = new OpenFileDialog
-        {
-            Filter = Loc.Get(rec ? "FilterRec" : "FilterOpen"),
-            InitialDirectory = _session.SuggestedFolder ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-        };
-        if (dialog.ShowDialog(this) == true)
-            OpenFile(dialog.FileName);
+        var file = Platform.Current.PickOpenFile(this, Loc.Get(rec ? "FilterRec" : "FilterOpen"), InitialFolder());
+        if (file is not null)
+            OpenFile(file);
     }
 
     /// <summary>Abre una grabacion (.soctask, .rec o un exe compilado). Errores explicados (RF-23).</summary>
@@ -567,17 +572,9 @@ public partial class MainWindow : Window
         var path = saveAs ? null : _session.FilePath;
         if (path is null)
         {
-            var dialog = new SaveFileDialog
-            {
-                Filter = Loc.Get("FilterSave"),
-                FileName = _session.SuggestedName(RecordingFile.Extension),
-                InitialDirectory = _session.SuggestedFolder ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                AddExtension = true,
-                DefaultExt = RecordingFile.Extension,
-            };
-            if (dialog.ShowDialog(this) != true)
+            path = Platform.Current.PickSaveFile(this, Loc.Get("FilterSave"), _session.SuggestedName(RecordingFile.Extension), InitialFolder(), RecordingFile.Extension);
+            if (path is null)
                 return false;
-            path = dialog.FileName;
         }
         try
         {
@@ -609,12 +606,18 @@ public partial class MainWindow : Window
         };
     }
 
-    private static string? DroppedFile(DragEventArgs e) =>
-        e.Data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } files && RecordingLoader.IsSupported(files[0]) ? files[0] : null;
+    private string InitialFolder() => _session.SuggestedFolder ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+    /// <summary>El reproductor incrustado (las pruebas pueden poner otro, o ninguno).</summary>
+    internal static Func<Stream?> PlayerStream { get; set; } =
+        () => Assembly.GetExecutingAssembly().GetManifestResourceStream(PlayerResource);
+
+    internal static string? DroppedFile(IDataObject data) =>
+        data.GetData(DataFormats.FileDrop) is string[] { Length: 1 } files && RecordingLoader.IsSupported(files[0]) ? files[0] : null;
 
     private void OnDrop(object sender, DragEventArgs e)
     {
-        if (DroppedFile(e) is { } path)
+        if (DroppedFile(e.Data) is { } path)
             Dispatcher.BeginInvoke(() => OpenFile(path));
     }
 
@@ -626,24 +629,16 @@ public partial class MainWindow : Window
     {
         if (_session.Recording is not { IsEmpty: false } recording)
             return;
-        using var player = Assembly.GetExecutingAssembly().GetManifestResourceStream(PlayerResource);
+        using var player = PlayerStream();
         if (player is null)
         {
             PromptWindow.Alert(this, Loc.Get("CompileTitle"), Loc.Get("CompileNoPlayer"));
             return;
         }
-        var dialog = new SaveFileDialog
-        {
-            Filter = Loc.Get("FilterExe"),
-            FileName = _session.SuggestedName(".exe"),
-            InitialDirectory = _session.SuggestedFolder ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            AddExtension = true,
-            DefaultExt = ".exe",
-        };
-        if (dialog.ShowDialog(this) != true)
+        var path = Platform.Current.PickSaveFile(this, Loc.Get("FilterExe"), _session.SuggestedName(".exe"), InitialFolder(), ".exe");
+        if (path is null)
             return;
-        var path = dialog.FileName;
-        if (string.Equals(Path.GetFullPath(path), Environment.ProcessPath, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Path.GetFullPath(path), Platform.Current.ExePath, StringComparison.OrdinalIgnoreCase))
         {
             PromptWindow.Alert(this, Loc.Get("CompileTitle"), Loc.Get("CompileOverSelf"));
             return;
@@ -710,7 +705,10 @@ public partial class MainWindow : Window
         RefreshInfo();
     }
 
-    private void OnMore(object sender, RoutedEventArgs e)
+    private void OnMore(object sender, RoutedEventArgs e) => BuildMoreMenu().IsOpen = true;
+
+    /// <summary>El menu de «Mas»: recientes, guardar como, importar, carpeta, guia, novedades, administrador, acerca de y salir.</summary>
+    internal ContextMenu BuildMoreMenu()
     {
         var menu = new ContextMenu { Style = (Style)FindResource("ThemedMenu"), PlacementTarget = MoreButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
         MenuItem Item(string id, string icon, string text, Action action, bool enabled = true)
@@ -738,11 +736,11 @@ public partial class MainWindow : Window
         menu.Items.Add(new Separator { Background = (System.Windows.Media.Brush)FindResource("Separator") });
         Item("GuideItem", "guide", Loc.Get("Guide"), () => ShowGuide());
         Item("WhatsNewItem", "news", Loc.Get("WhatsNew"), () => new WhatsNewWindow { Owner = this }.ShowDialog());
-        if (!Elevation.IsCurrentProcessElevated())
+        if (!Platform.Current.IsElevated)
             Item("AdminItem", "shield", Loc.Get("RestartAsAdmin"), RestartAsAdmin, idle);
         Item("AboutItem", "info", Loc.Get("About"), () => new AboutWindow { Owner = this }.ShowDialog());
         Item("ExitItem", "exit", Loc.Get("Exit"), Close);
-        menu.IsOpen = true;
+        return menu;
     }
 
     /// <summary>Idioma elegido en «Acerca de»: se recuerda.</summary>
@@ -759,7 +757,7 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(AppPaths.Current.DataFolder);
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{AppPaths.Current.DataFolder}\"") { UseShellExecute = true });
+            Platform.Current.Start(new ProcessStartInfo("explorer.exe", $"\"{AppPaths.Current.DataFolder}\"") { UseShellExecute = true });
         }
         catch (Exception ex)
         {
@@ -780,7 +778,7 @@ public partial class MainWindow : Window
             args += $" \"{file}\"";
         try
         {
-            Process.Start(new ProcessStartInfo(Environment.ProcessPath!, args) { UseShellExecute = true, Verb = "runas" });
+            Platform.Current.Start(new ProcessStartInfo(Platform.Current.ExePath!, args) { UseShellExecute = true, Verb = "runas" });
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {

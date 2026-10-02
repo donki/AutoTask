@@ -1,5 +1,27 @@
 # Changelog — sOC AutoTask
 
+## 2026.10.03.0 — Pruebas de las ventanas / Window tests
+
+**Español**
+
+- Las ventanas (barra, ajustes, editor, guía, «Acerca de», novedades, diálogos, bandeja y atajos)
+  y el reproductor de los exe compilados se prueban ahora con el banco automático: **301 pruebas**
+  y **94,9 %** de cobertura sobre toda la aplicación (antes 191 pruebas y 57,0 % con la misma
+  medida). Lo que la ventana pide al sistema (ganchos, `SendInput`, diálogos de abrir y guardar,
+  registro, instancia única) pasa por una pieza que en las pruebas se cambia por un doble.
+- Al cerrar la ventana principal o la de ajustes ya no se quedan enganchadas al cambio de idioma.
+- Sin cambios en lo que se ve ni en cómo se usa.
+
+**English**
+
+- The windows (toolbar, settings, editor, guide, About, what's new, dialogs, tray and shortcuts)
+  and the compiled-exe player are now covered by the automated test suite: **301 tests** and
+  **94.9 %** line coverage of the whole app (was 191 tests and 57.0 % measured the same way).
+  What the windows ask of the system (hooks, `SendInput`, open/save dialogs, registry, single
+  instance) goes through one piece that tests replace with a double.
+- Closing the main or settings window no longer leaves it subscribed to language changes.
+- Nothing changes in what you see or how you use it.
+
 ## 2026.10.01.0 — Primera versión / First release
 
 **Español**

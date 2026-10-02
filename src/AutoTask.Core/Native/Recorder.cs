@@ -1,5 +1,6 @@
 using SocAutoTask.Editing;
 using SocAutoTask.Model;
+using SocAutoTask.Playback;
 
 namespace SocAutoTask.Native;
 
@@ -20,7 +21,7 @@ public sealed record RecorderOptions
 /// Graba raton y teclado de todo el sistema (RF-01..07) con ganchos LL en su hilo. Los tiempos
 /// salen del propio evento (milisegundos del sistema), no de cuando se procesa.
 /// </summary>
-public sealed class Recorder(RecorderOptions options) : HookThread(mouse: true, keyboard: options.Keyboard)
+public sealed class Recorder(RecorderOptions options) : HookThread(mouse: true, keyboard: options.Keyboard), IRecorder
 {
     private readonly object _gate = new();
     private readonly List<MacroEvent> _events = new(4096);

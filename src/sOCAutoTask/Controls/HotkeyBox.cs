@@ -21,8 +21,12 @@ public sealed class HotkeyBox : TextBox
         IsReadOnly = true;
         IsReadOnlyCaretVisible = false;
         Cursor = Cursors.Hand;
-        Loc.LanguageChanged += () => Text = _hotkey.Display();
+        // Solo mientras esta en pantalla: la ventana de ajustes se cierra y la casilla no se queda enganchada.
+        Loaded += (_, _) => Loc.LanguageChanged += OnLanguageChanged;
+        Unloaded += (_, _) => Loc.LanguageChanged -= OnLanguageChanged;
     }
+
+    private void OnLanguageChanged() => Text = _hotkey.Display();
 
     public Hotkey Hotkey
     {

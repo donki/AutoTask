@@ -38,8 +38,10 @@ internal sealed class FakeClock : IClock
 }
 
 /// <summary>SendInput falso: apunta que se envio y cuando.</summary>
-internal sealed class RecordingSink(FakeClock? clock = null) : IInputSink
+internal sealed class RecordingSink(FakeClock? clock = null) : ICountingSink
 {
+    public int Rejected { get; set; }
+
     public List<(MacroEvent Event, double At)> Sent { get; } = [];
 
     public Action<MacroEvent>? OnSend { get; set; }

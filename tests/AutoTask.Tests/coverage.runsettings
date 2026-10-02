@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Cobertura de AutoTask.Core y de los ficheros de la aplicacion enlazados en el ensamblado de
+  Cobertura de AutoTask.Core, de la aplicacion WPF y de los ficheros de la aplicacion enlazados en el ensamblado de
   pruebas (se incluye el ensamblado de pruebas y se quitan las propias pruebas).
 -->
 <RunSettings>
@@ -10,7 +10,7 @@
         <Configuration>
           <Format>cobertura</Format>
           <IncludeTestAssembly>true</IncludeTestAssembly>
-          <Include>[AutoTask.Core]*,[AutoTask.Tests]*</Include>
+          <Include>[AutoTask.Core]*,[sOCAutoTask]*,[AutoTask.Tests]*</Include>
           <UseSourceLink>false</UseSourceLink>
           <ExcludeByFile>**/AutoTask.Tests/*.cs,**/obj/**</ExcludeByFile>
         </Configuration>

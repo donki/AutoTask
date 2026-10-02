@@ -38,7 +38,7 @@ public partial class GuideWindow : Window
             new("GuideEmergency", "stop", () => _settings.Emergency != EmergencyKeys.None ? StepStatus.Done : StepStatus.Pending, "GuideOpenSettings", OpenSettings),
             new("GuidePrivacy", "warning", () => StepStatus.Optional, "GuideOpenSettings", OpenSettings),
             new("GuideFiles", "folder", AssociationStatus, "GuideAssociate", Associate),
-            new("GuideAdmin", "shield", () => Elevation.IsCurrentProcessElevated() ? StepStatus.Done : StepStatus.Optional, "RestartAsAdmin", RestartAsAdmin),
+            new("GuideAdmin", "shield", () => Platform.Current.IsElevated ? StepStatus.Done : StepStatus.Optional, "RestartAsAdmin", RestartAsAdmin),
             new("GuideTry", "record", () => StepStatus.Optional, null, null),
         ];
         Activated += (_, _) => Show(_index);
@@ -77,11 +77,12 @@ public partial class GuideWindow : Window
 
     private StepStatus AssociationStatus()
     {
-        if (AppInfo.IsPackaged)
+        var platform = Platform.Current;
+        if (platform.IsPackaged)
             return StepStatus.Done;
-        if (Sandbox.IsOn || Environment.ProcessPath is null)
+        if (Sandbox.IsOn || platform.ExePath is not { } exe)
             return StepStatus.Optional;
-        return FileAssociation.IsApplied(Environment.ProcessPath) ? StepStatus.Done : StepStatus.Optional;
+        return FileAssociation.IsApplied(exe, platform.AssociationRoot) ? StepStatus.Done : StepStatus.Optional;
     }
 
     private void OnBack(object sender, RoutedEventArgs e) => Show(_index - 1);
@@ -104,11 +105,12 @@ public partial class GuideWindow : Window
 
     private void Associate()
     {
-        if (Sandbox.IsOn || AppInfo.IsPackaged || Environment.ProcessPath is not { } exe)
+        var platform = Platform.Current;
+        if (Sandbox.IsOn || platform.IsPackaged || platform.ExePath is not { } exe)
             return;
         try
         {
-            FileAssociation.Apply(exe, Loc.Get("FileTypeDescription"));
+            FileAssociation.Apply(exe, Loc.Get("FileTypeDescription"), platform.AssociationRoot);
         }
         catch (Exception ex)
         {

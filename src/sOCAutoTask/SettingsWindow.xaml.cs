@@ -59,10 +59,11 @@ public partial class SettingsWindow : Window
         ThemeCombo.SelectedIndex = (int)settings.Theme;
 
         // La asociacion: en el MSIX la pone el paquete; en modo aislado no se toca el registro.
-        _canAssociate = !AppInfo.IsPackaged && !Sandbox.IsOn && Environment.ProcessPath is not null;
+        var platform = Platform.Current;
+        _canAssociate = !platform.IsPackaged && !Sandbox.IsOn && platform.ExePath is not null;
         AssociateCheck.IsEnabled = _canAssociate;
-        AssociateCheck.IsChecked = AppInfo.IsPackaged || (_canAssociate && FileAssociation.IsApplied(Environment.ProcessPath!));
-        if (AppInfo.IsPackaged)
+        AssociateCheck.IsChecked = platform.IsPackaged || (_canAssociate && FileAssociation.IsApplied(platform.ExePath!, platform.AssociationRoot));
+        if (platform.IsPackaged)
             AssociateHint.Text = Loc.Get("AssociatePackaged");
         DataFolderText.Text = Loc.Format(AppPaths.Current.Portable ? "DataFolderPortable" : "DataFolder", AppPaths.Current.DataFolder);
 
@@ -81,7 +82,7 @@ public partial class SettingsWindow : Window
         foreach (ComboBoxItem item in ThemeCombo.Items)
             item.Content = Loc.Get("Theme" + item.Tag);
         DataFolderText.Text = Loc.Format(AppPaths.Current.Portable ? "DataFolderPortable" : "DataFolder", AppPaths.Current.DataFolder);
-        if (AppInfo.IsPackaged)
+        if (Platform.Current.IsPackaged)
             AssociateHint.Text = Loc.Get("AssociatePackaged");
     }
 
@@ -179,13 +180,14 @@ public partial class SettingsWindow : Window
 
     private void ApplyAssociation(bool wanted)
     {
-        var exe = Environment.ProcessPath!;
+        var exe = Platform.Current.ExePath!;
+        var root = Platform.Current.AssociationRoot;
         try
         {
-            if (wanted && !FileAssociation.IsApplied(exe))
-                FileAssociation.Apply(exe, Loc.Get("FileTypeDescription"));
-            else if (!wanted && FileAssociation.IsApplied(exe))
-                FileAssociation.Remove();
+            if (wanted && !FileAssociation.IsApplied(exe, root))
+                FileAssociation.Apply(exe, Loc.Get("FileTypeDescription"), root);
+            else if (!wanted && FileAssociation.IsApplied(exe, root))
+                FileAssociation.Remove(root);
         }
         catch (Exception ex)
         {

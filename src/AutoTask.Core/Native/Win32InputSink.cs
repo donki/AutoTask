@@ -9,23 +9,50 @@ namespace SocAutoTask.Native;
 /// Envia los eventos con SendInput (ARQUITECTURA §7): raton en coordenadas absolutas del
 /// escritorio virtual, botones con su movimiento en la misma entrada, teclas con vk + scan.
 /// </summary>
-public sealed class Win32InputSink : IInputSink
+public sealed class Win32InputSink : ICountingSink
 {
     /// <summary>Marca en dwExtraInfo de lo que envia AutoTask (por si alguien quiere distinguirlo).</summary>
     public const nint Signature = 0x50C7A5C;
 
-    private ScreenRect _screen = Screens.Virtual();
+    private readonly SendOne _send;
+    private readonly Func<ScreenRect> _virtualScreen;
+    private ScreenRect _screen;
     private long _lastScreenCheck = Environment.TickCount64;
+
+    /// <summary>Un INPUT a Windows; falso si no lo acepto.</summary>
+    internal delegate bool SendOne(in Win32.INPUT input);
+
+    public Win32InputSink()
+        : this(SendInput, Screens.Virtual)
+    {
+    }
+
+    /// <summary>Las pruebas miran los INPUT que saldrian, sin mover nada.</summary>
+    internal Win32InputSink(SendOne send, Func<ScreenRect> virtualScreen)
+    {
+        _send = send;
+        _virtualScreen = virtualScreen;
+        _screen = virtualScreen();
+    }
+
+    private static unsafe bool SendInput(in Win32.INPUT input)
+    {
+        var copy = input;
+        return Win32.SendInput(1, &copy, Marshal.SizeOf<Win32.INPUT>()) != 0;
+    }
+
+    /// <summary>Para las pruebas: cada cuanto se vuelve a mirar la pantalla.</summary>
+    internal long ScreenCheckMs { get; set; } = 1000;
 
     /// <summary>Eventos que Windows no acepto (SendInput devolvio 0: escritorio bloqueado, UIPI...).</summary>
     public int Rejected { get; private set; }
 
-    public unsafe void Send(in MacroEvent e)
+    public void Send(in MacroEvent e)
     {
         // La pantalla puede cambiar mientras se reproduce (un monitor que se apaga): se mira cada segundo.
-        if (Environment.TickCount64 - _lastScreenCheck > 1000)
+        if (Environment.TickCount64 - _lastScreenCheck >= ScreenCheckMs)
         {
-            _screen = Screens.Virtual();
+            _screen = _virtualScreen();
             _lastScreenCheck = Environment.TickCount64;
         }
 
@@ -52,7 +79,7 @@ public sealed class Win32InputSink : IInputSink
             default:
                 return;
         }
-        if (Win32.SendInput(1, &input, Marshal.SizeOf<Win32.INPUT>()) == 0)
+        if (!_send(in input))
             Rejected++;
     }
 
@@ -97,7 +124,7 @@ public sealed class SystemKeyboardState : IKeyboardState
 /// Vigila la parada de emergencia mientras se reproduce (RF-13): gancho LL de teclado en su hilo
 /// y un temporizador para la Esc mantenida. Llama a <c>onStop</c> una sola vez.
 /// </summary>
-public sealed class EmergencyStopWatcher(EmergencyKeys keys, int escapeHoldMs, Action onStop) : HookThread(mouse: false, keyboard: true, timerMs: 50)
+public sealed class EmergencyStopWatcher(EmergencyKeys keys, int escapeHoldMs, Action onStop) : HookThread(mouse: false, keyboard: true, timerMs: 50), IEmergencyWatcher
 {
     private readonly EmergencyStopLogic _logic = new(keys, escapeHoldMs);
     private int _fired;

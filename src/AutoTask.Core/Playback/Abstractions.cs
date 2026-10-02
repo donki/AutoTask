@@ -9,6 +9,30 @@ public interface IInputSink
     void Send(in MacroEvent e);
 }
 
+/// <summary>Un destino que cuenta lo que Windows rechazo (SendInput devolvio 0).</summary>
+public interface ICountingSink : IInputSink
+{
+    int Rejected { get; }
+}
+
+/// <summary>La grabadora de la interfaz: ganchos de verdad en la app; un doble en las pruebas.</summary>
+public interface IRecorder : IDisposable
+{
+    int Count { get; }
+
+    void Start();
+
+    void SetIgnoredArea(ScreenRect? area);
+
+    Recording StopAndCollect(PlaybackOptions playback);
+}
+
+/// <summary>El vigilante de la parada de emergencia mientras se reproduce.</summary>
+public interface IEmergencyWatcher : IDisposable
+{
+    void Start();
+}
+
 /// <summary>Reloj de la reproduccion, en milisegundos. El de verdad usa Stopwatch; las pruebas, uno falso.</summary>
 public interface IClock
 {

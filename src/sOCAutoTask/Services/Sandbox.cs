@@ -16,7 +16,7 @@ public static class Sandbox
     public const string Variable = "SOC_SANDBOX";
 
 #if DEBUG
-    public static bool IsOn { get; } = Environment.GetEnvironmentVariable(Variable) is { Length: > 0 };
+    public static bool IsOn { get; internal set; } = Environment.GetEnvironmentVariable(Variable) is { Length: > 0 };
 #else
     public static bool IsOn => false;
 #endif

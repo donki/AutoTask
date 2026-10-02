@@ -1,5 +1,6 @@
 using SocAutoTask.Compile;
 using SocAutoTask.Format;
+using SocAutoTask.Input;
 using SocAutoTask.Localization;
 using SocAutoTask.Native;
 using SocAutoTask.Playback;
@@ -13,12 +14,16 @@ namespace SocAutoTask.Player;
 /// </summary>
 internal static class Program
 {
+#if !AUTOTASK_TESTS
     [STAThread]
-    private static int Main(string[] args)
+    private static int Main(string[] args) => Run(args, Environment.ProcessPath, PlayerHost.Real);
+#endif
+
+    /// <summary>Todo menos el punto de entrada: las pruebas lo llaman con un exe y un sistema falsos.</summary>
+    internal static int Run(string[] args, string? exe, PlayerHost host)
     {
         Loc.Use(Loc.SystemLanguage());
         var check = args.Any(a => a.Equals("--check", StringComparison.OrdinalIgnoreCase));
-        var exe = Environment.ProcessPath;
         if (exe is null)
             return 2;
 
@@ -33,25 +38,25 @@ internal static class Program
         catch (RecordingFormatException ex) when (ex.Problem == FormatProblem.NotARecording)
         {
             if (!check)
-                NativeDialogs.Error(Loc.Get("PlayerNoRecording"), Loc.Get("PlayerTitle"));
+                host.Error(Loc.Get("PlayerNoRecording"), Loc.Get("PlayerTitle"));
             return 3;
         }
         catch (Exception ex) when (ex is RecordingFormatException or IOException or UnauthorizedAccessException)
         {
             if (!check)
-                NativeDialogs.Error(Loc.Format("PlayerBadRecording", Loc.Get(SocAutoTask.AppServices.FileErrors.LocKey(ex))), Loc.Get("PlayerTitle"));
+                host.Error(Loc.Format("PlayerBadRecording", Loc.Get(SocAutoTask.AppServices.FileErrors.LocKey(ex))), Loc.Get("PlayerTitle"));
             return 4;
         }
 
         if (check)
         {
-            Console.Out.WriteLine($"OK {recording.Count} {recording.TotalMs} {recording.Options.Speed} {recording.Options.Repeat} {recording.Options.Times}");
+            host.Out.WriteLine($"OK {recording.Count} {recording.TotalMs} {recording.Options.Speed} {recording.Options.Repeat} {recording.Options.Times}");
             return 0;
         }
 
-        var session = new PlaybackSession(recording.Events, recording.Options, new Win32InputSink(), new StopwatchClock(), new SystemKeyboardState(), options.CountdownSeconds);
-        using var emergency = new EmergencyStopWatcher(options.Emergency, options.EscapeHoldMs, () => session.Control.Stop(StopReason.Emergency));
-        if (options.Emergency != SocAutoTask.Input.EmergencyKeys.None)
+        var session = new PlaybackSession(recording.Events, recording.Options, host.Sink(), host.Clock(), host.Keyboard, options.CountdownSeconds);
+        using var emergency = host.Emergency(options.Emergency, options.EscapeHoldMs, () => session.Control.Stop(StopReason.Emergency));
+        if (options.Emergency != EmergencyKeys.None)
         {
             try
             {
@@ -59,11 +64,29 @@ internal static class Program
             }
             catch (Exception)
             {
-                NativeDialogs.Error(Loc.Get("PlayerHookFailed"), Loc.Get("PlayerTitle"));
+                host.Error(Loc.Get("PlayerHookFailed"), Loc.Get("PlayerTitle"));
                 return 5;
             }
         }
         var reason = session.Run();
         return reason == StopReason.None ? 0 : 1;
     }
+}
+
+/// <summary>Lo que el reproductor pide al sistema (de verdad, o un doble en las pruebas).</summary>
+internal sealed record PlayerHost(
+    Action<string, string> Error,
+    TextWriter Out,
+    Func<IInputSink> Sink,
+    Func<IClock> Clock,
+    IKeyboardState Keyboard,
+    Func<EmergencyKeys, int, Action, IEmergencyWatcher> Emergency)
+{
+    public static PlayerHost Real { get; } = new(
+        NativeDialogs.Error,
+        Console.Out,
+        () => new Win32InputSink(),
+        () => new StopwatchClock(),
+        new SystemKeyboardState(),
+        (keys, ms, stop) => new EmergencyStopWatcher(keys, ms, stop));
 }

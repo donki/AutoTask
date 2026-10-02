@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Pruebas de la logica de sOC AutoTask (xUnit, constitucion 8.6): AutoTask.Core entero y, de la
-    aplicacion, lo que no es ventana (el lector de iconos SVG). Nada toca datos reales ni la red:
+    Pruebas de sOC AutoTask (xUnit, constitucion 8.6): AutoTask.Core, la aplicacion WPF entera (las
+    ventanas se manejan en un hilo STA con una plataforma falsa: sin ganchos, sin SendInput, sin
+    dialogos de Windows) y el reproductor de los exe compilados. Nada toca datos reales ni la red:
     ajustes y ficheros van a carpetas temporales, la reproduccion usa un reloj y un SendInput
     falsos, y el registro de Windows solo se toca bajo HKCU\Software\sOCAutoTask.Tests (se borra).
   -->
@@ -15,6 +16,8 @@
     <IsTestProject>true</IsTestProject>
     <RootNamespace>SocAutoTask.Tests</RootNamespace>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);AUTOTASK_TESTS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +34,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AutoTask.Core\AutoTask.Core.csproj" />
-    <Compile Include="..\..\src\sOCAutoTask\Services\SvgIcons.cs" Link="App\SvgIcons.cs" />
+    <ProjectReference Include="..\..\src\sOCAutoTask\sOCAutoTask.csproj" />
+    <!-- El reproductor de los exe compilados es Native AOT: su Program.cs se compila aqui, sin el Main. -->
+    <Compile Include="..\..\src\sOCAutoTaskPlayer\Program.cs" Link="Player\Program.cs" />
   </ItemGroup>
 
 </Project>

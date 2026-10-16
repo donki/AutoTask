@@ -12,6 +12,15 @@ public static class WhatsNew
 
     public static readonly Entry[] Entries =
     [
+        new("2026.10.16.0",
+            [
+                "Los menús del botón «Más» y del icono junto al reloj tienen el mismo aspecto que en el resto de aplicaciones sOC, con iconos, en tema claro y oscuro.",
+                "El menú del icono junto al reloj enseña los atajos de grabar y reproducir.",
+            ],
+            [
+                "The menus of the «More» button and of the icon next to the clock look the same as in the other sOC apps, with icons, in light and dark theme.",
+                "The menu of the icon next to the clock shows the record and play shortcuts.",
+            ]),
         new("2026.10.03.0",
             [
                 "Más pruebas automáticas: ahora también de las ventanas y del reproductor de los .exe (301 pruebas).",

@@ -1,6 +1,6 @@
 # Changelog — sOC AutoTask
 
-## Sin publicar
+## 2026.10.16.0 — Menús con el aspecto de sOC / sOC-style menus
 
 **Español**
 

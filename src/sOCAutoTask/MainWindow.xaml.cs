@@ -97,7 +97,7 @@ public partial class MainWindow : Window
             else if (id == HotkeyManager.PlayId) TogglePlayback();
         };
         RegisterHotkeys(reportFailures: false);
-        _tray = new TrayIcon(this, Loc.Get, ToggleRecording, TogglePlayback, Close)
+        _tray = new TrayIcon(this, Loc.Get, BuildTrayMenu)
         {
             MinimizeToTray = _settings.TrayOnMinimize,
         };
@@ -705,17 +705,33 @@ public partial class MainWindow : Window
         RefreshInfo();
     }
 
+    /// <summary>
+    /// El menu del icono de la bandeja (RF-43), con el aspecto comun (General 6.14): abrir,
+    /// grabar/parar y reproducir/parar con su atajo global detras, y salir.
+    /// </summary>
+    internal ContextMenu BuildTrayMenu()
+    {
+        static string WithKey(string text, Input.Hotkey key) => key.IsValid ? text + "  " + key.Display() : text;
+        var menu = new ContextMenu { Style = (Style)FindResource("TrayMenu") };
+        menu.Items.Add(TrayIcon.Item(Loc.Get("TrayOpen"), "", () => _tray?.Restore()));
+        menu.Items.Add(TrayIcon.Item(WithKey(Loc.Get("TrayRecord"), _settings.RecordKey), "", ToggleRecording, danger: true));
+        menu.Items.Add(TrayIcon.Item(WithKey(Loc.Get("TrayPlay"), _settings.PlayKey), "", TogglePlayback));
+        menu.Items.Add(TrayIcon.Separator());
+        menu.Items.Add(TrayIcon.Item(Loc.Get("TrayExit"), "", () => { _tray?.Hide(); Close(); }));
+        return menu;
+    }
+
     private void OnMore(object sender, RoutedEventArgs e) => BuildMoreMenu().IsOpen = true;
 
     /// <summary>El menu de «Mas»: recientes, guardar como, importar, carpeta, guia, novedades, administrador, acerca de y salir.</summary>
     internal ContextMenu BuildMoreMenu()
     {
-        var menu = new ContextMenu { Style = (Style)FindResource("ThemedMenu"), PlacementTarget = MoreButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
-        MenuItem Item(string id, string icon, string text, Action action, bool enabled = true)
+        var menu = new ContextMenu { Style = (Style)FindResource("TrayMenu"), PlacementTarget = MoreButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        // Mismo aspecto que el de la bandeja (General 6.14); el glifo es de Segoe Fluent Icons.
+        MenuItem Item(string id, string glyph, string text, Action action, bool enabled = true)
         {
-            var item = new MenuItem { Style = (Style)FindResource("ThemedMenuItem"), Tag = icon, Header = text, IsEnabled = enabled };
+            var item = TrayIcon.Item(text, glyph, action, enabled);
             System.Windows.Automation.AutomationProperties.SetAutomationId(item, id);
-            item.Click += (_, _) => action();
             menu.Items.Add(item);
             return item;
         }
@@ -726,20 +742,20 @@ public partial class MainWindow : Window
         for (var i = 0; i < _settings.Recent.Count; i++)
         {
             var path = _settings.Recent[i];
-            Item($"Recent{i}", "recent", Path.GetFileName(path), () => OpenFile(path), idle).ToolTip = path;
+            Item($"Recent{i}", "", Path.GetFileName(path), () => OpenFile(path), idle).ToolTip = path;
         }
         if (_settings.Recent.Count > 0)
-            menu.Items.Add(new Separator { Background = (System.Windows.Media.Brush)FindResource("Separator") });
-        Item("SaveAsItem", "save", Loc.Get("SaveAs"), () => Save(saveAs: true), idle && _session.HasRecording);
-        Item("ImportRecItem", "import", Loc.Get("ImportRec"), () => ChooseAndOpen(rec: true), idle);
-        Item("DataFolderItem", "folder", Loc.Get("OpenDataFolder"), OpenDataFolder);
-        menu.Items.Add(new Separator { Background = (System.Windows.Media.Brush)FindResource("Separator") });
-        Item("GuideItem", "guide", Loc.Get("Guide"), () => ShowGuide());
-        Item("WhatsNewItem", "news", Loc.Get("WhatsNew"), () => new WhatsNewWindow { Owner = this }.ShowDialog());
+            menu.Items.Add(TrayIcon.Separator());
+        Item("SaveAsItem", "", Loc.Get("SaveAs"), () => Save(saveAs: true), idle && _session.HasRecording);
+        Item("ImportRecItem", "", Loc.Get("ImportRec"), () => ChooseAndOpen(rec: true), idle);
+        Item("DataFolderItem", "", Loc.Get("OpenDataFolder"), OpenDataFolder);
+        menu.Items.Add(TrayIcon.Separator());
+        Item("GuideItem", "", Loc.Get("Guide"), () => ShowGuide());
+        Item("WhatsNewItem", "", Loc.Get("WhatsNew"), () => new WhatsNewWindow { Owner = this }.ShowDialog());
         if (!Platform.Current.IsElevated)
-            Item("AdminItem", "shield", Loc.Get("RestartAsAdmin"), RestartAsAdmin, idle);
-        Item("AboutItem", "info", Loc.Get("About"), () => new AboutWindow { Owner = this }.ShowDialog());
-        Item("ExitItem", "exit", Loc.Get("Exit"), Close);
+            Item("AdminItem", "", Loc.Get("RestartAsAdmin"), RestartAsAdmin, idle);
+        Item("AboutItem", "", Loc.Get("About"), () => new AboutWindow { Owner = this }.ShowDialog());
+        Item("ExitItem", "", Loc.Get("Exit"), Close);
         return menu;
     }
 

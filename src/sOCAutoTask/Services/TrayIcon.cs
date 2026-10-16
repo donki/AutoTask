@@ -1,36 +1,39 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace SocAutoTask.Desktop.Services;
 
 /// <summary>
 /// Icono en el area de notificacion (RF-43), como el de RC Manager: al minimizar la ventana se
 /// esconde y queda el icono; clic para volver, boton derecho para Abrir, Grabar/Parar,
-/// Reproducir/Parar o Salir. Shell_NotifyIcon y un gancho en el procedimiento de la ventana.
+/// Reproducir/Parar o Salir. Shell_NotifyIcon y un gancho en el procedimiento de la ventana; el
+/// menu es un ContextMenu de WPF con el aspecto comun de las apps sOC (General 6.14), no el gris
+/// del sistema.
 /// </summary>
 public sealed class TrayIcon : IDisposable
 {
-    private const int WmSysCommand = 0x0112, WmCommand = 0x0111, WmRButtonUp = 0x0205, WmLButtonUp = 0x0202, WmLButtonDblClk = 0x0203;
+    private const int WmSysCommand = 0x0112, WmRButtonUp = 0x0205, WmLButtonUp = 0x0202, WmLButtonDblClk = 0x0203, WmContextMenu = 0x007B;
     private const int WmTray = 0x8001;
     private const int ScMinimize = 0xF020;
-    private const int IdOpen = 1, IdRecord = 2, IdPlay = 3, IdExit = 4;
 
     private readonly Window _window;
     private readonly IntPtr _hwnd;
     private readonly Func<string, string> _text;
-    private readonly Action _record, _play, _exit;
+    private readonly Func<ContextMenu> _buildMenu;
     private bool _shown;
 
     public bool MinimizeToTray { get; set; } = true;
 
-    public TrayIcon(Window window, Func<string, string> text, Action record, Action play, Action exit)
+    /// <param name="buildMenu">Crea el menu del boton derecho cada vez que se abre (asi va al dia).</param>
+    public TrayIcon(Window window, Func<string, string> text, Func<ContextMenu> buildMenu)
     {
         _window = window;
         _text = text;
-        _record = record;
-        _play = play;
-        _exit = exit;
+        _buildMenu = buildMenu;
         _hwnd = new WindowInteropHelper(window).Handle;
         HwndSource.FromHwnd(_hwnd)?.AddHook(Hook);
         window.StateChanged += (_, _) =>
@@ -51,17 +54,8 @@ public sealed class TrayIcon : IDisposable
             case WmTray:
                 var evt = (int)((long)lParam & 0xFFFF);
                 if (evt is WmLButtonUp or WmLButtonDblClk) Restore();
-                else if (evt == WmRButtonUp) ShowMenu();
+                else if (evt is WmRButtonUp or WmContextMenu) ShowMenu();
                 handled = true;
-                break;
-            case WmCommand:
-                switch ((int)((long)wParam & 0xFFFF))
-                {
-                    case IdOpen: Restore(); handled = true; break;
-                    case IdRecord: _record(); handled = true; break;
-                    case IdPlay: _play(); handled = true; break;
-                    case IdExit: Remove(); _exit(); handled = true; break;
-                }
                 break;
         }
         return IntPtr.Zero;
@@ -82,20 +76,24 @@ public sealed class TrayIcon : IDisposable
         Remove();
     }
 
+    /// <summary>
+    /// Abre el menu junto al puntero. Al abrirse pasa a primer plano: si no, no se cierra al
+    /// pulsar fuera (la ventana principal esta escondida).
+    /// </summary>
     private void ShowMenu()
     {
-        var menu = CreatePopupMenu();
-        AppendMenu(menu, 0, IdOpen, _text("TrayOpen"));
-        AppendMenu(menu, 0, IdRecord, _text("TrayRecord"));
-        AppendMenu(menu, 0, IdPlay, _text("TrayPlay"));
-        AppendMenu(menu, 0x800, 0, null);
-        AppendMenu(menu, 0, IdExit, _text("TrayExit"));
-        GetCursorPos(out var p);
-        SetForegroundWindow(_hwnd);
-        TrackPopupMenu(menu, 0x0080, p.X, p.Y, 0, _hwnd, IntPtr.Zero);
-        PostMessage(_hwnd, 0, IntPtr.Zero, IntPtr.Zero);
-        DestroyMenu(menu);
+        var menu = _buildMenu();
+        menu.Placement = PlacementMode.MousePoint;
+        menu.Opened += (_, _) =>
+        {
+            if (PresentationSource.FromVisual(menu) is HwndSource popup)
+                SetForegroundWindow(popup.Handle);
+        };
+        menu.IsOpen = true;
     }
+
+    /// <summary>Quita el icono (al salir desde su menu, antes de cerrar la ventana).</summary>
+    public void Hide() => Remove();
 
     private void Add()
     {
@@ -137,6 +135,33 @@ public sealed class TrayIcon : IDisposable
 
     public void Dispose() => Remove();
 
+    /// <summary>
+    /// Un elemento de menu con el estilo comun (General 6.14) y su glifo de Segoe Fluent Icons:
+    /// en el color de acento, o en Danger si la accion es destructiva o de grabar. Los colores van
+    /// por referencia al recurso para seguir el tema.
+    /// </summary>
+    public static MenuItem Item(string text, string glyph, Action action, bool enabled = true, bool danger = false)
+    {
+        var icon = new TextBlock
+        {
+            Text = glyph,
+            FontFamily = (FontFamily)Application.Current.FindResource("IconFont"),
+            FontSize = 14,
+        };
+        icon.SetResourceReference(TextBlock.ForegroundProperty, danger ? "Danger" : "Primary");
+        var item = new MenuItem
+        {
+            Header = text,
+            Style = (Style)Application.Current.FindResource("TrayItem"),
+            IsEnabled = enabled,
+            Icon = icon,
+        };
+        item.Click += (_, _) => action();
+        return item;
+    }
+
+    public static Separator Separator() => new() { Style = (Style)Application.Current.FindResource("TraySeparator") };
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct NotifyIconData
     {
@@ -156,17 +181,8 @@ public sealed class TrayIcon : IDisposable
         public IntPtr hBalloonIcon;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Point { public int X, Y; }
-
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern bool Shell_NotifyIcon(int message, ref NotifyIconData data);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
-    [DllImport("user32.dll")] private static extern IntPtr CreatePopupMenu();
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool AppendMenu(IntPtr menu, int flags, int id, string? text);
-    [DllImport("user32.dll")] private static extern bool DestroyMenu(IntPtr menu);
-    [DllImport("user32.dll")] private static extern bool TrackPopupMenu(IntPtr menu, int flags, int x, int y, int reserved, IntPtr hWnd, IntPtr rect);
-    [DllImport("user32.dll")] private static extern bool GetCursorPos(out Point p);
-    [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr LoadIcon(IntPtr instance, IntPtr name);
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern int ExtractIconEx(string file, int index, IntPtr[] large, IntPtr[] small, int count);
 }

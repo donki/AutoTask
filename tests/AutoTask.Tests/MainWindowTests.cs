@@ -927,6 +927,35 @@ public sealed class MainWindowTests : UiTest
     }
 
     [Fact]
+    public void Menus_AspectoComun_CadaElementoConSuGlifo_YGrabarEnRojo()
+    {
+        Ui.Run(() =>
+        {
+            var w = new MainWindow(Settings());
+            var app = Application.Current;
+            foreach (var menu in new[] { w.BuildMoreMenu(), w.BuildTrayMenu() })
+            {
+                Assert.Same(app.FindResource("TrayMenu"), menu.Style);
+                Assert.All(menu.Items.OfType<Separator>(), s => Assert.Same(app.FindResource("TraySeparator"), s.Style));
+                Assert.All(menu.Items.OfType<MenuItem>(), i =>
+                {
+                    Assert.Same(app.FindResource("TrayItem"), i.Style);
+                    var icon = Assert.IsType<TextBlock>(i.Icon);
+                    Assert.Same(app.FindResource("IconFont"), icon.FontFamily);
+                    Assert.Single(icon.Text);
+                });
+            }
+            // Bandeja: abrir, grabar, reproducir, separador y salir; solo grabar va en Danger.
+            var tray = w.BuildTrayMenu();
+            Assert.Equal(5, tray.Items.Count);
+            var items = tray.Items.OfType<MenuItem>().ToList();
+            Assert.StartsWith(Loc.Get("TrayRecord"), (string)items[1].Header);
+            Assert.Same(app.FindResource("Danger"), ((TextBlock)items[1].Icon).Foreground);
+            Assert.All(items.Where((_, n) => n != 1), i => Assert.Same(app.FindResource("Primary"), ((TextBlock)i.Icon).Foreground));
+        });
+    }
+
+    [Fact]
     public void Menu_Recientes_LosQueYaNoEstanSeQuitan_YLosDemasSeAbren()
     {
         var path = SavedFile();
@@ -1144,23 +1173,24 @@ public sealed class MainWindowTests : UiTest
             Assert.True(w.IsVisible);
             w.WindowState = WindowState.Minimized;  // minimizar con el boton: tambien a la bandeja
             Ui.WaitFor(() => !w.IsVisible);
-            SendMessage(hwnd, 0x0111, 1, 0);        // menu: Abrir
+            // El menu del boton derecho se pulsa sin abrirlo (abrirlo robaria el foco).
+            MenuItem Tray(int n) => w.BuildTrayMenu().Items.OfType<MenuItem>().ElementAt(n);
+            Ui.Click(Tray(0));                      // menu: Abrir
             Assert.True(w.IsVisible);
-            SendMessage(hwnd, 0x0111, 2, 0);        // menu: Grabar
+            Ui.Click(Tray(1));                      // menu: Grabar
             Assert.True(Fake.Recorder.Started);
-            SendMessage(hwnd, 0x0111, 2, 0);        // menu: Parar
-            SendMessage(hwnd, 0x0111, 3, 0);        // menu: Reproducir
+            Ui.Click(Tray(1));                      // menu: Parar
+            Ui.Click(Tray(2));                      // menu: Reproducir
             Ui.WaitFor(() => Idle(w));
             settings.TrayOnMinimize = false;
             w.ApplyWindowSettings();
             SendMessage(hwnd, 0x0112, 0xF020, 0);   // ya no va a la bandeja
-            SendMessage(hwnd, 0x0111, 77, 0);       // orden desconocida
             w.WindowState = WindowState.Normal;
             w.Hide();
             w.BringToFront(string.Empty);           // escondida: vuelve de la bandeja
             Assert.True(w.IsVisible);
             Ui.Answer("DiscardButton");
-            SendMessage(hwnd, 0x0111, 4, 0);        // menu: Salir
+            Ui.Click(Tray(3));                      // menu: Salir
             Assert.True(Ui.IsClosed(w));
         });
     }

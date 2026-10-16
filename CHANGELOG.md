@@ -1,5 +1,20 @@
 # Changelog — sOC AutoTask
 
+## Sin publicar
+
+**Español**
+
+- Los menús contextuales (el del botón «Más») y el del icono de la bandeja tienen el aspecto común
+  de las apps sOC (General 6.14): tarjeta redondeada con los colores del tema, en claro y oscuro, y
+  cada elemento con su icono; el de la bandeja ya no es el menú gris del sistema y muestra los
+  atajos de grabar y reproducir.
+
+**English**
+
+- Context menus (the «More» button) and the tray icon menu share the common look of sOC apps
+  (General 6.14): a rounded card in the theme colours, light and dark, with an icon on every item;
+  the tray menu is no longer the grey system menu and shows the record and play shortcuts.
+
 ## 2026.10.03.0 — Pruebas de las ventanas / Window tests
 
 **Español**
